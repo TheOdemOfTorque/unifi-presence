@@ -88,7 +88,10 @@ module.exports = class UniFiSocket extends UniFi {
         headers: { cookie: this.cookieParser.serialize() },
         timeout: 10000
       });
-      const active = new Set(response.data.map((client) => client.mac));
+      // Disconnected wireless sessions stay in the active list for a while, but without ap_mac.
+      const active = new Set(
+        response.data.filter((client) => client.type !== 'WIRELESS' || !_.isNil(client.ap_mac)).map((client) => client.mac)
+      );
       this.clients.forEach((client, mac) => {
         if (client.type !== 'WIRELESS' || active.has(mac) || client.connected === false) return;
         client.connected = false;
